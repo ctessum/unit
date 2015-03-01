@@ -264,6 +264,17 @@ func (u *Unit) Add(uniter Uniter) *Unit {
 	return u
 }
 
+// Sub subtracts the function argument from the reciever. Panics if the units of
+// the receiver and the argument don't match.
+func (u *Unit) Sub(uniter Uniter) *Unit {
+	a := uniter.Unit()
+	if !DimensionsMatch(u, a) {
+		panic("unit: mismatched dimensions in addition")
+	}
+	u.value -= a.value
+	return u
+}
+
 // Unit implements the Uniter interface
 func (u *Unit) Unit() *Unit {
 	return u
