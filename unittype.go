@@ -238,6 +238,20 @@ func New(value float64, d Dimensions) *Unit {
 	return u
 }
 
+// Clone makes a copy of a unit.
+func (u *Unit) Clone() *Unit {
+	o := &Unit{
+		dimensions: make(map[Dimension]int),
+		value:      u.value,
+	}
+	for key, val := range u.dimensions {
+		if val != 0 {
+			o.dimensions[key] = val
+		}
+	}
+	return o
+}
+
 // DimensionsMatch checks if the dimensions of two Uniters are the same.
 func DimensionsMatch(a, b Uniter) bool {
 	aUnit := a.Unit()
@@ -253,26 +267,39 @@ func DimensionsMatch(a, b Uniter) bool {
 	return true
 }
 
-// Add adds the function argument to the reciever. Panics if the units of
-// the receiver and the argument don't match.
-func (u *Unit) Add(uniter Uniter) *Unit {
-	a := uniter.Unit()
-	if !DimensionsMatch(u, a) {
-		panic("unit: mismatched dimensions in addition")
+// Add adds the function arguments.
+// It panics if the units of the arguments don't match.
+func Add(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
 	}
-	u.value += a.value
-	return u
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		if !DimensionsMatch(o, uu) {
+			panic("unit: mismatched dimensions in addition")
+		}
+		o.value += uu.value
+	}
+	return o
 }
 
-// Sub subtracts the function argument from the reciever. Panics if the units of
-// the receiver and the argument don't match.
-func (u *Unit) Sub(uniter Uniter) *Unit {
-	a := uniter.Unit()
-	if !DimensionsMatch(u, a) {
-		panic("unit: mismatched dimensions in addition")
+// Sub subtracts the second-through-last function arguments
+// from the first function argument.
+// It panics if the units of the arguments don't match.
+func Sub(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
 	}
-	u.value -= a.value
-	return u
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		if !DimensionsMatch(o, uu) {
+			panic("unit: mismatched dimensions in addition")
+		}
+		o.value -= uu.value
+	}
+	return o
 }
 
 // Unit implements the Uniter interface
@@ -280,36 +307,48 @@ func (u *Unit) Unit() *Unit {
 	return u
 }
 
-// Mul multiply the receiver by the input changing the dimensions
-// of the receiver as appropriate. The input is not changed.
-func (u *Unit) Mul(uniter Uniter) *Unit {
-	a := uniter.Unit()
-	for key, val := range a.dimensions {
-		if d := u.dimensions[key]; d == -val {
-			delete(u.dimensions, key)
-		} else {
-			u.dimensions[key] = d + val
-		}
+// Mul multiplies the function arguments, calculating
+// the proper units for the result.
+func Mul(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
 	}
-	u.formatted = ""
-	u.value *= a.value
-	return u
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		for key, val := range uu.dimensions {
+			if d := o.dimensions[key]; d == -val {
+				delete(o.dimensions, key)
+			} else {
+				o.dimensions[key] = d + val
+			}
+		}
+		o.value *= uu.value
+	}
+	o.formatted = ""
+	return o
 }
 
-// Div divides the receiver by the argument changing the
-// dimensions of the receiver as appropriate.
-func (u *Unit) Div(uniter Uniter) *Unit {
-	a := uniter.Unit()
-	u.value /= a.value
-	for key, val := range a.dimensions {
-		if d := u.dimensions[key]; d == val {
-			delete(u.dimensions, key)
-		} else {
-			u.dimensions[key] = d - val
-		}
+// Div divides the function arguments, calculating
+// the proper units for the result.
+func Div(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
 	}
-	u.formatted = ""
-	return u
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		for key, val := range uu.dimensions {
+			if d := o.dimensions[key]; d == val {
+				delete(o.dimensions, key)
+			} else {
+				o.dimensions[key] = d - val
+			}
+		}
+		o.value /= uu.value
+	}
+	o.formatted = ""
+	return o
 }
 
 // Value return the raw value of the unit as a float64. Use of this
@@ -318,6 +357,10 @@ func (u *Unit) Div(uniter Uniter) *Unit {
 // should be used to guarantee dimension consistency.
 func (u *Unit) Value() float64 {
 	return u.value
+}
+
+func (u *Unit) Dimensions() Dimensions {
+	return u.dimensions
 }
 
 // Format makes Unit satisfy the fmt.Formatter interface. The unit is formatted
