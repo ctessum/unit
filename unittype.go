@@ -267,6 +267,19 @@ func DimensionsMatch(a, b Uniter) bool {
 	return true
 }
 
+// Matches checks if the two sets of dimensions are the same.
+func (d Dimensions) Matches(d2 Dimensions) bool {
+	if len(d) != len(d2) {
+		return false
+	}
+	for key, val := range d {
+		if d2[key] != val {
+			return false
+		}
+	}
+	return true
+}
+
 // Add adds the function arguments.
 // It panics if the units of the arguments don't match.
 func Add(u ...Uniter) Uniter {
@@ -277,7 +290,9 @@ func Add(u ...Uniter) Uniter {
 	for i := 1; i < len(u); i++ {
 		uu := u[i].Unit()
 		if !DimensionsMatch(o, uu) {
-			panic("unit: mismatched dimensions in addition")
+			panic(fmt.Errorf("Mismatched dimensions in addition: "+
+				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				o.Dimensions(), i, uu.Dimensions()))
 		}
 		o.value += uu.value
 	}
@@ -295,7 +310,9 @@ func Sub(u ...Uniter) Uniter {
 	for i := 1; i < len(u); i++ {
 		uu := u[i].Unit()
 		if !DimensionsMatch(o, uu) {
-			panic("unit: mismatched dimensions in addition")
+			panic(fmt.Errorf("Mismatched dimensions in subtraction: "+
+				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				o.Dimensions(), i, uu.Dimensions()))
 		}
 		o.value -= uu.value
 	}
