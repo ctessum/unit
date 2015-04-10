@@ -368,6 +368,48 @@ func Div(u ...Uniter) Uniter {
 	return o
 }
 
+// Max returns the maximum among function arguments.
+// It panics if the units of the arguments don't match.
+func Max(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
+	}
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		if !DimensionsMatch(o, uu) {
+			panic(fmt.Errorf("Mismatched dimensions in addition: "+
+				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				o.Dimensions(), i, uu.Dimensions()))
+		}
+		if uu.value > o.value {
+			o.value = uu.value
+		}
+	}
+	return o
+}
+
+// Min returns the minimum among function arguments.
+// It panics if the units of the arguments don't match.
+func Min(u ...Uniter) Uniter {
+	if len(u) == 0 {
+		return nil
+	}
+	o := u[0].Unit().Clone()
+	for i := 1; i < len(u); i++ {
+		uu := u[i].Unit()
+		if !DimensionsMatch(o, uu) {
+			panic(fmt.Errorf("Mismatched dimensions in addition: "+
+				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				o.Dimensions(), i, uu.Dimensions()))
+		}
+		if uu.value < o.value {
+			o.value = uu.value
+		}
+	}
+	return o
+}
+
 // Value return the raw value of the unit as a float64. Use of this
 // method is, in general, not recommended, though it can be useful
 // for printing. Instead, the From type of a specific dimension
