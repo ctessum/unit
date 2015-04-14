@@ -319,6 +319,14 @@ func Sub(u ...Uniter) Uniter {
 	return o
 }
 
+// Negate multiplies the value by -1, returning
+// a copy of the input argument.
+func Negate(u Uniter) Uniter {
+	uu := u.Unit().Clone()
+	uu.value *= -1
+	return uu
+}
+
 // Unit implements the Uniter interface
 func (u *Unit) Unit() *Unit {
 	return u
