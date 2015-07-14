@@ -126,6 +126,30 @@ func TestOp(t *testing.T) {
 			Val:  5.,
 			Dims: "",
 		},
+		tester{
+			f:    Max,
+			args: []Uniter{v1, v2},
+			Val:  10.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Max,
+			args: []Uniter{nil, v1, v2},
+			Val:  10.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Min,
+			args: []Uniter{v1, v2},
+			Val:  2.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Min,
+			args: []Uniter{nil, v1, v2},
+			Val:  2.,
+			Dims: "m s^-2",
+		},
 	}
 	for _, test := range tests {
 		r := test.f(test.args...)
