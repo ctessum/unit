@@ -44,14 +44,20 @@ func (d Dimension) String() string {
 const (
 	// SI Base Units
 	reserved Dimension = iota
+	// CurrentDim is the dimmension representing current.
 	CurrentDim
+	// LengthDim is the dimension representing length.
 	LengthDim
+	// LuminousIntensityDim is the dimension representing luminous intensity
 	LuminousIntensityDim
+	// MassDim is the dimension representing mass
 	MassDim
+	// TemperatureDim is the dimension representing temperature
 	TemperatureDim
+	// TimeDim is the dimension representing time.
 	TimeDim
-	// Other common SI Dimensions
-	AngleDim // e.g. radians
+	// AngleDim is the dimension representing angle.
+	AngleDim
 )
 
 var (
@@ -280,43 +286,76 @@ func (d Dimensions) Matches(d2 Dimensions) bool {
 	return true
 }
 
-// Add adds the function arguments.
-// It panics if the units of the arguments don't match.
-func Add(u ...Uniter) Uniter {
+// operate loops through u and applies function f,
+// ignoring nil values.
+func operateIgnore(f func(*Unit, *Unit, int), u []Uniter) *Unit {
 	if len(u) == 0 {
 		return nil
 	}
+	var o *Unit
+	for i := 0; i < len(u); i++ {
+		if u[i] == nil {
+			continue
+		}
+		if o == nil {
+			o = u[i].Unit().Clone()
+		} else {
+			uu := u[i].Unit()
+			f(o, uu, i)
+		}
+	}
+	return o
+}
+
+// operateSubDiv loops through u and applies function f,
+// panicing on nil values.
+func operatePanic(f func(*Unit, *Unit, int), u []Uniter) *Unit {
+	if len(u) == 0 {
+		return nil
+	}
+	if u[0] == nil {
+		panic("Argument 0 is nil")
+	}
 	o := u[0].Unit().Clone()
 	for i := 1; i < len(u); i++ {
+		if u[i] == nil {
+			panic(fmt.Errorf("Argument %d is nil", i))
+		}
 		uu := u[i].Unit()
+		f(o, uu, i)
+	}
+	return o
+}
+
+// Add adds the function arguments.
+// It panics if the units of the arguments don't match.
+// Any nil values are assumed to equal zero.
+func Add(u ...Uniter) Uniter {
+	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
-				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				"the first non-nil argument has dimensions %s, whereas "+
+				"argument %d has dimensions %s.",
 				o.Dimensions(), i, uu.Dimensions()))
 		}
 		o.value += uu.value
-	}
-	return o
+	}, u)
 }
 
 // Sub subtracts the second-through-last function arguments
 // from the first function argument.
 // It panics if the units of the arguments don't match.
+// Nil arguments cause a panic.
 func Sub(u ...Uniter) Uniter {
-	if len(u) == 0 {
-		return nil
-	}
-	o := u[0].Unit().Clone()
-	for i := 1; i < len(u); i++ {
-		uu := u[i].Unit()
+	return operatePanic(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in subtraction: "+
-				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
+				"the first non-nil argument has dimensions %s, whereas "+
+				"argument %d has dimensions %s.",
 				o.Dimensions(), i, uu.Dimensions()))
 		}
 		o.value -= uu.value
-	}
-	return o
+	}, u)
 }
 
 // Negate multiplies the value by -1, returning
@@ -334,13 +373,9 @@ func (u *Unit) Unit() *Unit {
 
 // Mul multiplies the function arguments, calculating
 // the proper units for the result.
+// Nil arguments cause a panic.
 func Mul(u ...Uniter) Uniter {
-	if len(u) == 0 {
-		return nil
-	}
-	o := u[0].Unit().Clone()
-	for i := 1; i < len(u); i++ {
-		uu := u[i].Unit()
+	return operatePanic(func(o, uu *Unit, i int) {
 		for key, val := range uu.dimensions {
 			if d := o.dimensions[key]; d == -val {
 				delete(o.dimensions, key)
@@ -349,20 +384,16 @@ func Mul(u ...Uniter) Uniter {
 			}
 		}
 		o.value *= uu.value
-	}
-	o.formatted = ""
-	return o
+		o.formatted = ""
+	}, u)
 }
 
-// Div divides the function arguments, calculating
+// Div divides the function arguments with the first arguement
+// as the numerator and the rest as the denominator, calculating
 // the proper units for the result.
+// Nil arguments cause a panic.
 func Div(u ...Uniter) Uniter {
-	if len(u) == 0 {
-		return nil
-	}
-	o := u[0].Unit().Clone()
-	for i := 1; i < len(u); i++ {
-		uu := u[i].Unit()
+	return operatePanic(func(o, uu *Unit, i int) {
 		for key, val := range uu.dimensions {
 			if d := o.dimensions[key]; d == val {
 				delete(o.dimensions, key)
@@ -371,20 +402,15 @@ func Div(u ...Uniter) Uniter {
 			}
 		}
 		o.value /= uu.value
-	}
-	o.formatted = ""
-	return o
+		o.formatted = ""
+	}, u)
 }
 
 // Max returns the maximum among function arguments.
 // It panics if the units of the arguments don't match.
+// Any nil values are ignored.
 func Max(u ...Uniter) Uniter {
-	if len(u) == 0 {
-		return nil
-	}
-	o := u[0].Unit().Clone()
-	for i := 1; i < len(u); i++ {
-		uu := u[i].Unit()
+	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
 				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
@@ -393,19 +419,14 @@ func Max(u ...Uniter) Uniter {
 		if uu.value > o.value {
 			o.value = uu.value
 		}
-	}
-	return o
+	}, u)
 }
 
 // Min returns the minimum among function arguments.
 // It panics if the units of the arguments don't match.
+// Any nil values are ignored.
 func Min(u ...Uniter) Uniter {
-	if len(u) == 0 {
-		return nil
-	}
-	o := u[0].Unit().Clone()
-	for i := 1; i < len(u); i++ {
-		uu := u[i].Unit()
+	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
 				"argument 0 has dimensions %s, whereas argument %d has dimensions %s.",
@@ -414,8 +435,7 @@ func Min(u ...Uniter) Uniter {
 		if uu.value < o.value {
 			o.value = uu.value
 		}
-	}
-	return o
+	}, u)
 }
 
 // Value return the raw value of the unit as a float64. Use of this
@@ -426,6 +446,7 @@ func (u *Unit) Value() float64 {
 	return u.value
 }
 
+// Dimensions returns the dimenstions associated with the unit.
 func (u *Unit) Dimensions() Dimensions {
 	return u.dimensions
 }

@@ -78,6 +78,68 @@ func TestInitialization(t *testing.T) {
 	}
 }
 
+func TestOp(t *testing.T) {
+	var v1 = New(10, Dimensions{LengthDim: 1, TimeDim: -2})
+	var v2 = New(2, Dimensions{LengthDim: 1, TimeDim: -2})
+
+	type tester struct {
+		f    func(...Uniter) Uniter
+		args []Uniter
+		Val  float64
+		Dims string
+	}
+
+	tests := []tester{
+		tester{
+			f:    Add,
+			args: []Uniter{v1, v2},
+			Val:  12.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Add,
+			args: []Uniter{nil, v1, v2},
+			Val:  12.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Sub,
+			args: []Uniter{v1, v2},
+			Val:  8.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f:    Mul,
+			args: []Uniter{v1, v2},
+			Val:  20.,
+			Dims: "m^2 s^-4",
+		},
+		tester{
+			f:    Mul,
+			args: []Uniter{v1, v2},
+			Val:  20.,
+			Dims: "m^2 s^-4",
+		},
+		tester{
+			f:    Div,
+			args: []Uniter{v1, v2},
+			Val:  5.,
+			Dims: "",
+		},
+	}
+	for _, test := range tests {
+		r := test.f(test.args...)
+		if r.Unit().Value() != test.Val {
+			t.Errorf("Got value %v, expected %v.",
+				r.Unit().Value(), test.Val)
+		}
+		if r.Unit().Dimensions().String() != test.Dims {
+			t.Errorf("Got value %v, expected %v.",
+				r.Unit().Dimensions().String(), test.Dims)
+		}
+	}
+}
+
 var dimensionEqualityTests = []struct {
 	name        string
 	a           Uniter
