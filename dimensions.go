@@ -138,8 +138,10 @@ var (
 type Dimensions map[Dimension]int
 
 var (
+	// Dimless is for dimensionless numbers.
 	Dimless = Dimensions{}
-	Joule   = Dimensions{
+	// Joule is a unit of energy [kg m2 s-2]
+	Joule = Dimensions{
 		MassDim:   1,
 		LengthDim: 2,
 		TimeDim:   -2,
@@ -169,12 +171,13 @@ var (
 	Kilogram = Dimensions{
 		MassDim: 1,
 	}
-
+	// Watt is a unit of power [kg m2 s-3]
 	Watt = Dimensions{
 		MassDim:   1,
 		LengthDim: 2,
 		TimeDim:   -3,
 	}
+	// Herz is a unit of frequency [s-1]
 	Herz = Dimensions{
 		TimeDim: -1,
 	}
