@@ -138,8 +138,8 @@ var (
 type Dimensions map[Dimension]int
 
 var (
-	Unitless = Dimensions{}
-	Joule    = Dimensions{
+	Dimless = Dimensions{}
+	Joule   = Dimensions{
 		MassDim:   1,
 		LengthDim: 2,
 		TimeDim:   -2,
