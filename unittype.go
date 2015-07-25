@@ -10,12 +10,6 @@ import (
 	"sort"
 )
 
-// Uniter is an interface representing a type that can be converted
-// to a unit.
-type Uniter interface {
-	Unit() *Unit
-}
-
 // Dimension is a type representing an SI base dimension or other
 // orthogonal dimension. If a new dimension is desired for a
 // domain-specific problem, NewDimension should be used. Integers
@@ -258,10 +252,10 @@ func (u *Unit) Clone() *Unit {
 	return o
 }
 
-// DimensionsMatch checks if the dimensions of two Uniters are the same.
-func DimensionsMatch(a, b Uniter) bool {
-	aUnit := a.Unit()
-	bUnit := b.Unit()
+// DimensionsMatch checks if the dimensions of two *Units are the same.
+func DimensionsMatch(a, b *Unit) bool {
+	aUnit := a
+	bUnit := b
 	if len(aUnit.dimensions) != len(bUnit.dimensions) {
 		return false
 	}
@@ -288,7 +282,7 @@ func (d Dimensions) Matches(d2 Dimensions) bool {
 
 // operate loops through u and applies function f,
 // ignoring nil values.
-func operateIgnore(f func(*Unit, *Unit, int), u []Uniter) *Unit {
+func operateIgnore(f func(*Unit, *Unit, int), u []*Unit) *Unit {
 	if len(u) == 0 {
 		return nil
 	}
@@ -298,9 +292,9 @@ func operateIgnore(f func(*Unit, *Unit, int), u []Uniter) *Unit {
 			continue
 		}
 		if o == nil {
-			o = u[i].Unit().Clone()
+			o = u[i].Clone()
 		} else {
-			uu := u[i].Unit()
+			uu := u[i]
 			f(o, uu, i)
 		}
 	}
@@ -309,19 +303,19 @@ func operateIgnore(f func(*Unit, *Unit, int), u []Uniter) *Unit {
 
 // operateSubDiv loops through u and applies function f,
 // panicing on nil values.
-func operatePanic(f func(*Unit, *Unit, int), u []Uniter) *Unit {
+func operatePanic(f func(*Unit, *Unit, int), u []*Unit) *Unit {
 	if len(u) == 0 {
 		return nil
 	}
 	if u[0] == nil {
 		panic("Argument 0 is nil")
 	}
-	o := u[0].Unit().Clone()
+	o := u[0].Clone()
 	for i := 1; i < len(u); i++ {
 		if u[i] == nil {
 			panic(fmt.Errorf("Argument %d is nil", i))
 		}
-		uu := u[i].Unit()
+		uu := u[i]
 		f(o, uu, i)
 	}
 	return o
@@ -330,7 +324,7 @@ func operatePanic(f func(*Unit, *Unit, int), u []Uniter) *Unit {
 // Add adds the function arguments.
 // It panics if the units of the arguments don't match.
 // Any nil values are assumed to equal zero.
-func Add(u ...Uniter) Uniter {
+func Add(u ...*Unit) *Unit {
 	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
@@ -346,7 +340,7 @@ func Add(u ...Uniter) Uniter {
 // from the first function argument.
 // It panics if the units of the arguments don't match.
 // Nil arguments cause a panic.
-func Sub(u ...Uniter) Uniter {
+func Sub(u ...*Unit) *Unit {
 	return operatePanic(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in subtraction: "+
@@ -360,21 +354,16 @@ func Sub(u ...Uniter) Uniter {
 
 // Negate multiplies the value by -1, returning
 // a copy of the input argument.
-func Negate(u Uniter) Uniter {
-	uu := u.Unit().Clone()
+func Negate(u *Unit) *Unit {
+	uu := u.Clone()
 	uu.value *= -1
 	return uu
-}
-
-// Unit implements the Uniter interface
-func (u *Unit) Unit() *Unit {
-	return u
 }
 
 // Mul multiplies the function arguments, calculating
 // the proper units for the result.
 // Nil arguments cause a panic.
-func Mul(u ...Uniter) Uniter {
+func Mul(u ...*Unit) *Unit {
 	return operatePanic(func(o, uu *Unit, i int) {
 		for key, val := range uu.dimensions {
 			if d := o.dimensions[key]; d == -val {
@@ -392,7 +381,7 @@ func Mul(u ...Uniter) Uniter {
 // as the numerator and the rest as the denominator, calculating
 // the proper units for the result.
 // Nil arguments cause a panic.
-func Div(u ...Uniter) Uniter {
+func Div(u ...*Unit) *Unit {
 	return operatePanic(func(o, uu *Unit, i int) {
 		for key, val := range uu.dimensions {
 			if d := o.dimensions[key]; d == val {
@@ -409,7 +398,7 @@ func Div(u ...Uniter) Uniter {
 // Max returns the maximum among function arguments.
 // It panics if the units of the arguments don't match.
 // Any nil values are ignored.
-func Max(u ...Uniter) Uniter {
+func Max(u ...*Unit) *Unit {
 	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
@@ -425,7 +414,7 @@ func Max(u ...Uniter) Uniter {
 // Min returns the minimum among function arguments.
 // It panics if the units of the arguments don't match.
 // Any nil values are ignored.
-func Min(u ...Uniter) Uniter {
+func Min(u ...*Unit) *Unit {
 	return operateIgnore(func(o, uu *Unit, i int) {
 		if !DimensionsMatch(o, uu) {
 			panic(fmt.Errorf("Mismatched dimensions in addition: "+
@@ -485,4 +474,14 @@ func (u *Unit) Format(fs fmt.State, c rune) {
 		u.formatted = u.dimensions.String()
 	}
 	fmt.Fprintf(fs, " %s", u.formatted)
+}
+
+// Check checks whether u's dimensions match d, and returns an error if they
+// don't.
+func (u *Unit) Check(d Dimensions) error {
+	if !u.Dimensions().Matches(d) {
+		return fmt.Errorf("unit dimensions (%s) should be %s",
+			u.Dimensions().String(), d.String())
+	}
+	return nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 var formatTests = []struct {
-	unit   Uniter
+	unit   *Unit
 	format string
 	expect string
 }{
@@ -23,18 +23,18 @@ var formatTests = []struct {
 	{New(6.62606957e-34, Dimensions{MassDim: 2, TimeDim: -1}), "%.3e", "6.626e-34 kg^2 s^-1"},
 	{New(6.62606957e-34, Dimensions{MassDim: 2, TimeDim: -1}), "%v", "6.62606957e-34 kg^2 s^-1"},
 	{New(6.62606957e-34, Dimensions{MassDim: 2, TimeDim: -1}), "%s", "%!s(*Unit=6.62606957e-34 kg^2 s^-1)"},
-	{Dimless(math.E), "%v", "2.718281828459045"},
-	{Dimless(math.E), "%#v", "unit.Dimless(2.718281828459045)"},
-	{Dimless(math.E), "%s", "%!s(unit.Dimless=2.718281828459045)"},
-	{Mass(1), "%v", "1 kg"},
-	{Mass(1), "%#v", "unit.Mass(1)"},
-	{Mass(1), "%s", "%!s(unit.Mass=1 kg)"},
-	{Length(1.61619926e-35), "%v", "1.61619926e-35 m"},
-	{Length(1.61619926e-35), "%#v", "unit.Length(1.61619926e-35)"},
-	{Length(1.61619926e-35), "%s", "%!s(unit.Length=1.61619926e-35 m)"},
-	{Time(15.2), "%v", "15.2 s"},
-	{Time(15.2), "%#v", "unit.Time(15.2)"},
-	{Time(15.2), "%s", "%!s(unit.Time=15.2 s)"},
+	{New(math.E, Unitless), "%v", "2.718281828459045"},
+	{New(math.E, Unitless), "%#v", "unit.Dimless(2.718281828459045)"},
+	{New(math.E, Kilogram), "%s", "%!s(unit.Dimless=2.718281828459045)"},
+	{New(1, Kilogram), "%v", "1 kg"},
+	{New(1, Kilogram), "%#v", "unit.Mass(1)"},
+	{New(1, Kilogram), "%s", "%!s(unit.Mass=1 kg)"},
+	{New(1.61619926e-35, Meter), "%v", "1.61619926e-35 m"},
+	{New(1.61619926e-35, Meter), "%#v", "unit.Length(1.61619926e-35)"},
+	{New(1.61619926e-35, Meter), "%s", "%!s(unit.Length=1.61619926e-35 m)"},
+	{New(15.2, Second), "%v", "15.2 s"},
+	{New(15.2, Second), "%#v", "unit.Time(15.2)"},
+	{New(15.2, Second), "%s", "%!s(unit.Time=15.2 s)"},
 }
 
 func TestFormat(t *testing.T) {
@@ -83,8 +83,8 @@ func TestOp(t *testing.T) {
 	var v2 = New(2, Dimensions{LengthDim: 1, TimeDim: -2})
 
 	type tester struct {
-		f    func(...Uniter) Uniter
-		args []Uniter
+		f    func(...*Unit) *Unit
+		args []*Unit
 		Val  float64
 		Dims string
 	}
@@ -92,61 +92,61 @@ func TestOp(t *testing.T) {
 	tests := []tester{
 		tester{
 			f:    Add,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  12.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Add,
-			args: []Uniter{nil, v1, v2},
+			args: []*Unit{nil, v1, v2},
 			Val:  12.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Sub,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  8.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Mul,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  20.,
 			Dims: "m^2 s^-4",
 		},
 		tester{
 			f:    Mul,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  20.,
 			Dims: "m^2 s^-4",
 		},
 		tester{
 			f:    Div,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  5.,
 			Dims: "",
 		},
 		tester{
 			f:    Max,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  10.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Max,
-			args: []Uniter{nil, v1, v2},
+			args: []*Unit{nil, v1, v2},
 			Val:  10.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Min,
-			args: []Uniter{v1, v2},
+			args: []*Unit{v1, v2},
 			Val:  2.,
 			Dims: "m s^-2",
 		},
 		tester{
 			f:    Min,
-			args: []Uniter{nil, v1, v2},
+			args: []*Unit{nil, v1, v2},
 			Val:  2.,
 			Dims: "m s^-2",
 		},
@@ -166,8 +166,8 @@ func TestOp(t *testing.T) {
 
 var dimensionEqualityTests = []struct {
 	name        string
-	a           Uniter
-	b           Uniter
+	a           *Unit
+	b           *Unit
 	shouldMatch bool
 }{
 	{"same_empty", New(1.0, Dimensions{}), New(1.0, Dimensions{}), true},
