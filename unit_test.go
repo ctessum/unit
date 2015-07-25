@@ -153,13 +153,13 @@ func TestOp(t *testing.T) {
 	}
 	for _, test := range tests {
 		r := test.f(test.args...)
-		if r.Unit().Value() != test.Val {
+		if r.Value() != test.Val {
 			t.Errorf("Got value %v, expected %v.",
-				r.Unit().Value(), test.Val)
+				r.Value(), test.Val)
 		}
-		if r.Unit().Dimensions().String() != test.Dims {
+		if r.Dimensions().String() != test.Dims {
 			t.Errorf("Got value %v, expected %v.",
-				r.Unit().Dimensions().String(), test.Dims)
+				r.Dimensions().String(), test.Dims)
 		}
 	}
 }
