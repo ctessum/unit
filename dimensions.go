@@ -184,6 +184,14 @@ var (
 	Second = Dimensions{
 		TimeDim: 1,
 	}
+	MeterPerSecond = Dimensions{
+		TimeDim:   -1,
+		LengthDim: 1,
+	}
+	MeterPerSecond2 = Dimensions{
+		TimeDim:   -2,
+		LengthDim: 1,
+	}
 )
 
 func (d Dimensions) String() string {
