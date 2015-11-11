@@ -257,7 +257,7 @@ func NewDimension(symbol string) Dimension {
 		panic("unit: dimension string \"" + symbol + "\" already used")
 	}
 	symbols = append(symbols, symbol)
-	d := Dimension(len(symbols))
+	d := Dimension(len(symbols) - 1)
 	dimensions[symbol] = d
 	return d
 }

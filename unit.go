@@ -254,15 +254,16 @@ func (u *Unit) Format(fs fmt.State, c rune) {
 		}
 		fallthrough
 	case 'e', 'E', 'f', 'F', 'g', 'G':
-		p, pOk := fs.Precision()
-		if !pOk {
-			p = -1
-		}
+		s := "%"
 		w, wOk := fs.Width()
-		if !wOk {
-			w = -1
+		if wOk {
+			s += fmt.Sprintf("%d", w)
 		}
-		fmt.Fprintf(fs, "%*.*"+string(c), w, p, u.value)
+		p, pOk := fs.Precision()
+		if pOk {
+			s += fmt.Sprintf(".%d", p)
+		}
+		fmt.Fprintf(fs, s+string(c), u.value)
 	default:
 		fmt.Fprintf(fs, "%%!%c(*Unit=%g)", c, u)
 		return
