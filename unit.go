@@ -133,6 +133,17 @@ func Add(u ...*Unit) *Unit {
 	}, u)
 }
 
+// Add adds uu to u, modifying u instead of creating a copy.
+func (u *Unit) Add(uu *Unit) {
+	if !DimensionsMatch(u, uu) {
+		panic(fmt.Errorf("Mismatched dimensions in addition: "+
+			"the first argument has dimensions %s, whereas "+
+			"the second argument has dimensions %s.",
+			u.Dimensions(), uu.Dimensions()))
+	}
+	u.value += uu.value
+}
+
 // Sub subtracts the second-through-last function arguments
 // from the first function argument.
 // It panics if the units of the arguments don't match.
@@ -149,12 +160,28 @@ func Sub(u ...*Unit) *Unit {
 	}, u)
 }
 
+// Sub subtracts uu from u, modifying u instead of creating a copy.
+func (u *Unit) Sub(uu *Unit) {
+	if !DimensionsMatch(u, uu) {
+		panic(fmt.Errorf("Mismatched dimensions in subtraction: "+
+			"the first argument has dimensions %s, whereas "+
+			"the second argument has dimensions %s.",
+			u.Dimensions(), uu.Dimensions()))
+	}
+	u.value -= uu.value
+}
+
 // Negate multiplies the value by -1, returning
 // a copy of the input argument.
 func Negate(u *Unit) *Unit {
 	uu := u.Clone()
 	uu.value *= -1
 	return uu
+}
+
+// Negate multiplies u by -1, modifying u instead of creating a copy.
+func (u *Unit) Negate() {
+	u.value *= -1
 }
 
 // Mul multiplies the function arguments, calculating
@@ -174,6 +201,19 @@ func Mul(u ...*Unit) *Unit {
 	}, u)
 }
 
+// Mul multiplies u by uu, modifying u instead of creating a copy.
+func (u *Unit) Mul(uu *Unit) {
+	for key, val := range uu.dimensions {
+		if d := u.dimensions[key]; d == -val {
+			delete(u.dimensions, key)
+		} else {
+			u.dimensions[key] = d + val
+		}
+	}
+	u.value *= uu.value
+	u.formatted = ""
+}
+
 // Div divides the function arguments with the first arguement
 // as the numerator and the rest as the denominator, calculating
 // the proper units for the result.
@@ -190,6 +230,19 @@ func Div(u ...*Unit) *Unit {
 		o.value /= uu.value
 		o.formatted = ""
 	}, u)
+}
+
+// Div divides u by uu, modifying u instead of creating a copy.
+func (u *Unit) Div(uu *Unit) {
+	for key, val := range uu.dimensions {
+		if d := u.dimensions[key]; d == val {
+			delete(u.dimensions, key)
+		} else {
+			u.dimensions[key] = d - val
+		}
+	}
+	u.value /= uu.value
+	u.formatted = ""
 }
 
 // Max returns the maximum among function arguments.

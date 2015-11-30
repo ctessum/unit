@@ -164,6 +164,60 @@ func TestOp(t *testing.T) {
 	}
 }
 
+func TestOpInPlace(t *testing.T) {
+	var v1 = New(10, Dimensions{LengthDim: 1, TimeDim: -2})
+	var v2 = New(2, Dimensions{LengthDim: 1, TimeDim: -2})
+
+	type tester struct {
+		f    func(*Unit)
+		Val  float64
+		Dims string
+	}
+
+	tests := []tester{
+		tester{
+			f: func(v1 *Unit) {
+				v1.Add(v2)
+			},
+			Val:  12.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f: func(v1 *Unit) {
+				v1.Sub(v2)
+			},
+			Val:  8.,
+			Dims: "m s^-2",
+		},
+		tester{
+			f: func(v1 *Unit) {
+				v1.Mul(v2)
+			},
+			Val:  20.,
+			Dims: "m^2 s^-4",
+		},
+		tester{
+			f: func(v1 *Unit) {
+				v1.Div(v2)
+			},
+			Val:  5.,
+			Dims: "",
+		},
+	}
+	for _, test := range tests {
+		vv1 := v1.Clone()
+		test.f(vv1)
+		if vv1.Value() != test.Val {
+			t.Errorf("Got value %v, expected %v.",
+				vv1.Value(), test.Val)
+		}
+		if vv1.Dimensions().String() != test.Dims {
+			t.Errorf("Got value %v, expected %v.",
+				vv1.Dimensions().String(), test.Dims)
+		}
+	}
+}
+
 var dimensionEqualityTests = []struct {
 	name        string
 	a           *Unit
