@@ -12,6 +12,11 @@ func Ton(t float64) *unit.Unit {
 	return unit.New(t*907.185, unit.Kilogram)
 }
 
+// Pound creates a new unit from a number of (mass) pounds p.
+func Pound(p float64) *unit.Unit {
+	return unit.New(p*0.45359237, unit.Kilogram)
+}
+
 // Mile creates a new unit from a number of miles m.
 func Mile(m float64) *unit.Unit {
 	return unit.New(m*1609.34, unit.Meter)
