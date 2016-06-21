@@ -146,6 +146,7 @@ var (
 		LengthDim: 2,
 		TimeDim:   -2,
 	}
+	// Meter is a meter.
 	Meter = Dimensions{
 		LengthDim: 1,
 	}
@@ -157,6 +158,17 @@ var (
 	Meter3 = Dimensions{
 		LengthDim: 3,
 	}
+	// Meter3PerSecond is a cubic meter per second.
+	Meter3PerSecond = Dimensions{
+		LengthDim: 3,
+		TimeDim:   -1,
+	}
+
+	// Kelvin is a degree kelvin [K].
+	Kelvin = Dimensions{
+		TemperatureDim: 1,
+	}
+
 	// KilogramPerMeter3 is density.
 	KilogramPerMeter3 = Dimensions{
 		MassDim:   1,
@@ -168,6 +180,7 @@ var (
 		LengthDim: -1,
 		TimeDim:   -2,
 	}
+	// Kilogram is a kilogram.
 	Kilogram = Dimensions{
 		MassDim: 1,
 	}
@@ -181,13 +194,16 @@ var (
 	Herz = Dimensions{
 		TimeDim: -1,
 	}
+	// Second is a second (time).
 	Second = Dimensions{
 		TimeDim: 1,
 	}
+	// MeterPerSecond is speed.
 	MeterPerSecond = Dimensions{
 		TimeDim:   -1,
 		LengthDim: 1,
 	}
+	// MeterPerSecond2 is acceleration.
 	MeterPerSecond2 = Dimensions{
 		TimeDim:   -2,
 		LengthDim: 1,

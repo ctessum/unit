@@ -61,3 +61,23 @@ func Gallon(g float64) *unit.Unit {
 func Foot3(f float64) *unit.Unit {
 	return unit.New(f*0.0283168, unit.Meter3)
 }
+
+// Foot creates a new unit from a number of feet.
+func Foot(f float64) *unit.Unit {
+	return unit.New(f*0.3048, unit.Meter)
+}
+
+// FootPerSecond creates a new unit from a number of feet per second.
+func FootPerSecond(f float64) *unit.Unit {
+	return unit.New(f*0.3048, unit.MeterPerSecond)
+}
+
+// Foot3PerSecond creates a new unit from a number of cubic feet per second.
+func Foot3PerSecond(f float64) *unit.Unit {
+	return unit.New(f*0.0283168, unit.Meter3PerSecond)
+}
+
+// Fahrenheit creates a new unit from a number of degrees Fahrenheit.
+func Fahrenheit(f float64) *unit.Unit {
+	return unit.New((f+459.67)*5./9., unit.Kelvin)
+}
